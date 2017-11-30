@@ -1,0 +1,65 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:latest",
+    "tslint-consistent-codestyle",
+    "tslint-eslint-rules"
+  ],
+  "jsRules": {},
+  "rules": {
+    "arrow-parens": false,
+    "arrow-return-shorthand": [ true ],
+    "comment-format": [ true, "check-space" ],
+    "eofline": false,
+    "import-blacklist": [ true, "rxjs" ],
+    "import-name": false,
+    "interface-name": [true, "never-prefix"],
+    "interface-over-type-literal": false,
+    "linebreak-style": [true, "CRLF"],
+    "member-access": false,
+    "member-ordering": [
+      true,
+      { "order": "statics-first" }
+    ],
+    "newline-before-return": false,
+    "no-any": false,
+    "no-console": false,
+    "no-increment-decrement": false,
+    "no-inferrable-types": [ true ],
+    "no-import-side-effect": [
+      true,
+      { "ignore-module": "(global.scss|mocha|chai)" }
+    ],
+    "no-invalid-this": false,
+    "no-null-keyword": false,
+    "no-require-imports": false,
+    "no-submodule-imports": false,
+    "no-switch-case-fall-through": true,
+    "no-trailing-whitespace": true,
+    "no-unsafe-any": false,
+    "no-unused-variable": true,
+    "no-unused-expression": false,
+    "no-void-expression": [ true, "ignore-arrow-function-shorthand" ],
+    "object-literal-sort-keys": false,
+    "only-arrow-functions": [ true, "allow-declarations" ],
+    "ordered-imports": [
+      true,
+      {
+        "import-sources-order": "lowercase-last",
+        "named-imports-order": "lowercase-first"
+      }
+    ],
+    "prefer-method-signature": false,
+    "prefer-template": [ true, "allow-single-concat" ],
+    "quotemark": [ true, "single", "jsx-double" ],
+    "react-tsx-curly-spacing": false,
+    "no-single-line-block-comment": false,
+    "triple-equals": [ true, "allow-null-check" ],
+    "typedef": [ true, "parameter", "property-declaration", "member-variable-declaration" ],
+    "variable-name": [ true, "ban-keywords", "check-format", "allow-pascal-case" ],
+    "jsx-no-multiline-js": false,
+    "strict-boolean-expressions": false,
+    "no-implicit-dependencies": false
+  },
+  "rulesDirectory": []
+}
