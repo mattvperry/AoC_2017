@@ -21,7 +21,7 @@ async function day1() {
     const input = await promisify(readFile)('day1/input.txt', 'utf8');
     const digits = R.map(parseInt, Array.from(input));
 
-    const part1 = sumPairs(2, digits);
+    const part1 = sumPairs(1, digits);
     const part2 = sumPairs(digits.length / 2, digits);
 
     console.log(part1);
