@@ -1,9 +1,5 @@
-rotate :: Int -> [a] -> [a]
-rotate _ [] = []
-rotate n xs = zipWith const (drop n (cycle xs)) xs
-
 sumPairs :: Int -> [Int] -> Int
-sumPairs d xs = sum . zipWith fn (rotate d xs) $ xs
+sumPairs d xs = sum . zipWith fn (drop d $ cycle xs) $ xs
     where fn a b = if a == b then a else 0
 
 solve :: Int -> String -> Int
