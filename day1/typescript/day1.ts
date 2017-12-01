@@ -6,7 +6,7 @@ import * as R from 'ramda';
 function pairsAtDist<T>(dist: number, list: T[]) {
     return R.compose(
         R.map(R.map<number, T>(i => list[i])),
-        R.map<number, [number, number]>(i => [i, R.mathMod(i + dist, list.length)]),
+        R.map<number, number[]>(i => [i, R.mathMod(i + dist, list.length)]),
         R.range(0),
     )(list.length);
 }
