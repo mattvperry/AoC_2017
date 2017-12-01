@@ -3,19 +3,19 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
-function pairsAtDist<T>(dist: number, list: T[]) {
-    return R.compose(
-        R.map(R.map<number, T>(i => list[i])),
-        R.map<number, number[]>(i => [i, R.mathMod(i + dist, list.length)]),
-        R.range(0),
-    )(list.length);
-}
+const rotate = <T>(dist: number, list: T[]) => (
+    R.flatten<T>(R.reverse(R.splitAt(dist, list)))
+);
 
-function sumPairs(dist: number, list: number[]) {
-    const pairs = pairsAtDist(dist, list);
-    const matches = R.filter<number[]>(R.apply<number, boolean>(R.equals), pairs);
-    return R.sum(R.map(x => x[0], matches));
-}
+const sumPairs = (dist: number, list: number[]) => (
+    R.compose(
+        R.sum,
+        R.zipWith<number, number, number>(
+            (a, b) => a === b ? a : 0,
+            rotate(dist, list),
+        ),
+    )(list)
+);
 
 async function day1() {
     const input = await promisify(readFile)('day1/input.txt', 'utf8');
