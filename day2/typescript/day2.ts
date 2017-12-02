@@ -12,8 +12,8 @@ const part1 = mapSum(row => Math.max(...row) - Math.min(...row));
 
 const part2 = mapSum(row =>
     R.compose<number[], XProd, XProd, number[], number[], number>(
-        r => r[0],
-        R.filter<number>(d => d % 1 === 0),
+        R.nth(0),
+        R.filter<number>(R.compose(R.equals(0), R.flip(R.mathMod)(1))),
         R.map(R.apply<number, number>(R.divide)),
         R.filter<KVP>(R.apply<number, boolean>(R.compose(R.not, R.equals))),
         R.xprod<number>(row),
