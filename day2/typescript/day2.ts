@@ -8,7 +8,7 @@ const minimum = R.apply(Math.min);
 const mapSum = (fn: (x: number[]) => number) => R.compose(R.sum, R.map(fn));
 
 const part1 = mapSum(
-    R.converge(R.subtract, [maximum, minimum]),
+    R.lift(R.subtract)(maximum, minimum),
 );
 
 const part2 = mapSum(row =>
@@ -19,10 +19,15 @@ const part2 = mapSum(row =>
     )(row),
 );
 
+const readGrid = R.compose(
+    R.map(R.map(parseInt)),
+    R.map(R.split('\t')),
+    R.split('\n'),
+);
+
 async function day2() {
     const input = await promisify(readFile)('day2/input.txt', 'utf8');
-    const grid = input.split('\n')
-        .map(r => r.split('\t').map(n => parseInt(n.trim(), 10)));
+    const grid = readGrid(input);
 
     console.log(part1(grid));
     console.log(part2(grid));
