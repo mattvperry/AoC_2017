@@ -3,18 +3,17 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
+const maximum = R.apply(Math.max);
+const minimum = R.apply(Math.min);
 const mapSum = (fn: (x: number[]) => number) => R.compose(R.sum, R.map(fn));
 
 const part1 = mapSum(
-    R.compose<number[], number[], number>(
-        R.apply<number, number>(R.subtract),
-        R.apply(R.juxt([Math.max, Math.min])),
-    ),
+    R.converge(R.subtract, [maximum, minimum]),
 );
 
 const part2 = mapSum(row =>
     R.compose<number[], number[], number[], number>(
-        R.apply<number, number>(Math.max),
+        maximum,
         R.filter<number>(x => x % 1 === 0),
         R.lift(R.divide)(row),
     )(row),
