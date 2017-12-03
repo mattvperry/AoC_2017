@@ -3,20 +3,20 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
-type KVP = R.KeyValuePair<number, number>;
-type XProd = KVP[];
-
 const mapSum = (fn: (x: number[]) => number) => R.compose(R.sum, R.map(fn));
 
-const part1 = mapSum(row => Math.max(...row) - Math.min(...row));
+const part1 = mapSum(
+    R.compose<number[], number[], number>(
+        R.apply<number, number>(R.subtract),
+        R.apply(R.juxt([Math.max, Math.min])),
+    ),
+);
 
 const part2 = mapSum(row =>
-    R.compose<number[], XProd, XProd, number[], number[], number>(
-        R.nth(0),
-        R.filter<number>(R.compose(R.equals(0), R.flip(R.mathMod)(1))),
-        R.map(R.apply<number, number>(R.divide)),
-        R.filter<KVP>(R.apply<number, boolean>(R.compose(R.not, R.equals))),
-        R.xprod<number>(row),
+    R.compose<number[], number[], number[], number>(
+        R.apply<number, number>(Math.max),
+        R.filter<number>(x => x % 1 === 0),
+        R.lift(R.divide)(row),
     )(row),
 );
 
