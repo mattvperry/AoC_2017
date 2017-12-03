@@ -5,54 +5,42 @@ import * as R from 'ramda';
 
 type Pos = [number, number];
 type Grid<T> = { [coord: string]: T };
-type Movers = Array<(x: number, y: number) => Pos>;
+type Mover = (x: number, y: number) => Pos;
 
-const dirs: Movers = [
+const dirs: Array<(pos: Pos) => Pos> = R.map(R.apply, [
     (x, y) => [x + 1, y], // Right
     (x, y) => [x, y - 1], // Up
     (x, y) => [x - 1, y], // Left
     (x, y) => [x, y + 1], // Down
-];
-
-const allDirs: Movers = [
-    ...dirs,
     (x, y) => [x + 1, y + 1],
     (x, y) => [x - 1, y - 1],
     (x, y) => [x - 1, y + 1],
     (x, y) => [x + 1, y - 1],
-];
-
-const posToStr = JSON.stringify;
-const strToPos = JSON.parse;
+] as Mover[]);
 
 function* traverse() {
-    const grid: Grid<boolean> = {};
+    function* moves() {
+        let dir = 0;
+        for (let num = 1; true; num += .5) {
+            yield* R.repeat(dirs[dir], Math.floor(num));
+            dir = (dir + 1) % 4;
+        }
+    }
 
     let pos: Pos = [0, 0];
-    let dir = 0;
-    grid[posToStr(pos)] = true;
-
-    for (;;) {
+    for (const move of moves()) {
         yield pos;
-
-        pos = R.apply(dirs[dir])(pos);
-        grid[posToStr(pos)] = true;
-
-        const nextDir = R.mathMod(dir + 1, 4);
-        const nextPos = R.apply(dirs[nextDir])(pos);
-        if (grid[posToStr(nextPos)] === undefined) {
-            dir = nextDir;
-        }
+        pos = move(pos);
     }
 }
 
 const part1 = (data: number) => {
     const gen = traverse();
-    const [x, y] = R.compose(
-        R.reduce(() => gen.next().value, [0, 0]),
-        R.range(0),
+    return R.compose<number, Pos[], Pos, number>(
+        R.apply(R.useWith(R.add, R.repeat(Math.abs, 2))),
+        R.last,
+        R.times(() => gen.next().value),
     )(data);
-    return Math.abs(x) + Math.abs(y);
 };
 
 const part2 = (data: number) => {
@@ -60,12 +48,14 @@ const part2 = (data: number) => {
     const gen = traverse();
 
     const sumNeighbors = (
-        R.compose<Pos, Pos[], string[], number[], number[], number>(
+        R.compose<Pos, Pos[], number[], number>(
             R.sum,
-            R.map(R.defaultTo(0)),
-            R.map(R.flip<string, Grid<number>, any>(R.prop)(grid)),
-            R.map(posToStr),
-            R.juxt(R.map(R.apply, allDirs)),
+            R.map(R.compose<Pos, string, number, number>(
+                R.defaultTo(0),
+                coord => grid[coord],
+                JSON.stringify,
+            )),
+            R.juxt(dirs),
         )
     );
 
@@ -76,7 +66,7 @@ const part2 = (data: number) => {
             return sum;
         }
 
-        grid[posToStr(coord)] = R.max(sum, 1);
+        grid[JSON.stringify(coord)] = R.max(sum, 1);
     }
 };
 
