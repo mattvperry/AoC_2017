@@ -3,19 +3,35 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
-const part1 = (data: any) => {
-    return 'wat';
-};
+type Counter = { [key: string]: number };
 
-const part2 = (data: any) => {
-    return 'wat';
-};
+const part1 = R.compose<string[][], Counter[], Counter[], number>(
+    R.length,
+    R.filter(R.compose<Counter, number[], boolean>(
+        R.all(R.equals(1)),
+        R.values,
+    )),
+    R.map(R.countBy(R.identity)),
+);
+
+const part2 = R.compose(
+    part1,
+    R.map(R.map(R.compose(
+        R.join(''),
+        R.sort(R.ascend(R.identity)),
+        Array.from,
+    ))),
+);
 
 async function day4() {
     const input = await promisify(readFile)('day4/input.txt', 'utf8');
+    const words = R.compose(
+        R.map(R.split(' ')),
+        R.split('\r\n'),
+    )(input);
 
-    console.log(part1(input));
-    console.log(part2(input));
+    console.log(part1(words));
+    console.log(part2(words));
 }
 
 day4();
