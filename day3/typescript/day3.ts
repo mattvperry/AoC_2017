@@ -44,28 +44,24 @@ const part1 = (data: number) => {
     )(data);
 };
 
-const sumNeighbors = (g: Grid<number>) => (
-    R.compose<Pos, Pos[], number[], number>(
-        R.sum,
-        R.map(coord => g[JSON.stringify(coord)] || 0),
-        R.juxt(moves),
-    )
-);
-
-function* gridGen() {
-    const gen = spiral();
-    let state: [number, Grid<number>] = [1, { [JSON.stringify([0, 0])]: 1 }];
+function* gridGen(state: [number, Grid<number>], gen: IterableIterator<Pos>) {
     for (;;) {
         const [_, g] = state;
         const coord = gen.next().value;
-        const sum = sumNeighbors(g)(coord);
+        const sum = R.compose<Pos, Pos[], number[], number>(
+            R.sum,
+            R.map(c => g[JSON.stringify(coord)] || 0),
+            R.juxt(moves),
+        )(coord);
         state = [sum, { ...g, [JSON.stringify(coord)]: sum }];
         yield state;
     }
 }
 
 const part2 = (data: number) => {
-    for (const [sum, _] of gridGen()) {
+    const gen = spiral();
+    const state: [number, Grid<number>] = [1, { [JSON.stringify([0, 0])]: 1 }];
+    for (const [sum, _] of gridGen(state, gen)) {
         if (sum > data) {
             return sum;
         }
