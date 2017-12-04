@@ -44,24 +44,23 @@ const part1 = (data: number) => {
     )(data);
 };
 
-function* gridGen(state: [number, Grid<number>], gen: IterableIterator<Pos>) {
+function* gridGen(grid: Grid<number>, gen: IterableIterator<Pos>) {
     for (;;) {
-        const [_, g] = state;
         const coord = gen.next().value;
         const sum = R.compose<Pos, Pos[], number[], number>(
             R.sum,
-            R.map(c => g[JSON.stringify(coord)] || 0),
+            R.map(c => grid[JSON.stringify(c)] || 0),
             R.juxt(moves),
         )(coord);
-        state = [sum, { ...g, [JSON.stringify(coord)]: sum }];
-        yield state;
+        grid[JSON.stringify(coord)] = sum;
+        yield sum;
     }
 }
 
 const part2 = (data: number) => {
     const gen = spiral();
-    const state: [number, Grid<number>] = [1, { [JSON.stringify([0, 0])]: 1 }];
-    for (const [sum, _] of gridGen(state, gen)) {
+    const grid = { [JSON.stringify([0, 0])]: 1 };
+    for (const sum of gridGen(grid, gen)) {
         if (sum > data) {
             return sum;
         }
