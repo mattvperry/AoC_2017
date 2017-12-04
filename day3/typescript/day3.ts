@@ -7,66 +7,68 @@ type Pos = [number, number];
 type Grid<T> = { [coord: string]: T };
 type Mover = (x: number, y: number) => Pos;
 
-const dirs: Array<(pos: Pos) => Pos> = R.map(R.apply, [
-    (x, y) => [x + 1, y], // Right
+const moves: Array<(pos: Pos) => Pos> = R.map(R.apply, [
     (x, y) => [x, y - 1], // Up
     (x, y) => [x - 1, y], // Left
     (x, y) => [x, y + 1], // Down
+    (x, y) => [x + 1, y], // Right
     (x, y) => [x + 1, y + 1],
     (x, y) => [x - 1, y - 1],
     (x, y) => [x - 1, y + 1],
     (x, y) => [x + 1, y - 1],
 ] as Mover[]);
 
-function* traverse() {
-    function* moves() {
+function* spiral() {
+    function* dirs() {
         let dir = 0;
         for (let num = 1; true; num += .5) {
-            yield* R.repeat(dirs[dir], Math.floor(num));
+            yield* R.repeat(dir, Math.floor(num));
             dir = (dir + 1) % 4;
         }
     }
 
-    let pos: Pos = [0, 0];
-    for (const move of moves()) {
+    let pos: Pos = [0, 1];
+    for (const dir of dirs()) {
         yield pos;
-        pos = move(pos);
+        pos = moves[dir](pos);
     }
 }
 
 const part1 = (data: number) => {
-    const gen = traverse();
-    return R.compose<number, Pos[], Pos, number>(
+    const gen = spiral();
+    return R.compose<number, number, Pos[], Pos, number>(
         R.apply(R.useWith(R.add, R.repeat(Math.abs, 2))),
         R.last,
         R.times(() => gen.next().value),
+        R.inc,
     )(data);
 };
 
-const part2 = (data: number) => {
-    const grid: Grid<number> = {};
-    const gen = traverse();
+const sumNeighbors = (g: Grid<number>) => (
+    R.compose<Pos, Pos[], number[], number>(
+        R.sum,
+        R.map(coord => g[JSON.stringify(coord)] || 0),
+        R.juxt(moves),
+    )
+);
 
-    const sumNeighbors = (
-        R.compose<Pos, Pos[], number[], number>(
-            R.sum,
-            R.map(R.compose<Pos, string, number, number>(
-                R.defaultTo(0),
-                coord => grid[coord],
-                JSON.stringify,
-            )),
-            R.juxt(dirs),
-        )
-    );
-
+function* gridGen() {
+    const gen = spiral();
+    let state: [number, Grid<number>] = [1, { [JSON.stringify([0, 0])]: 1 }];
     for (;;) {
+        const [_, g] = state;
         const coord = gen.next().value;
-        const sum = sumNeighbors(coord);
+        const sum = sumNeighbors(g)(coord);
+        state = [sum, { ...g, [JSON.stringify(coord)]: sum }];
+        yield state;
+    }
+}
+
+const part2 = (data: number) => {
+    for (const [sum, _] of gridGen()) {
         if (sum > data) {
             return sum;
         }
-
-        grid[JSON.stringify(coord)] = R.max(sum, 1);
     }
 };
 
