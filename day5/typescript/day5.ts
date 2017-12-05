@@ -5,18 +5,17 @@ import * as R from 'ramda';
 
 const doJumps = (change: (jump: number) => number) => (data: number[]) => {
     let offset = 0;
-    for (let count = 0; true; ++count) {
-        if (offset >= data.length || offset < 0) {
-            return count;
-        }
+    let count = 0;
+    for (; offset < data.length && offset >= 0; ++count) {
         const jump = data[offset];
         data[offset] += change(jump);
         offset += jump;
     }
+
+    return count;
 };
 
-const part1 = doJumps(_ => 1);
-
+const part1 = doJumps(R.always(1));
 const part2 = doJumps(jump => jump >= 3 ? -1 : 1);
 
 async function day5() {
