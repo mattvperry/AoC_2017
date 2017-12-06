@@ -3,52 +3,48 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
-type Lookup = { [key: string]: boolean };
+type DupePair = [number, number[]];
 
-const redistribute = (banks: number[]): number[] => {
-    let max = Math.max(...banks);
+const redist = (banks: number[]): number[] => {
+    const max = Math.max(...banks);
     const idx = R.findIndex(R.equals(max), banks);
-    banks[idx] = 0;
-    for (let i = (idx + 1) % banks.length; max > 0; i = (i + 1) % banks.length) {
-        banks[i]++;
-        max--;
-    }
-
-    return banks;
+    return R.reduce(R.flip(R.call), banks, [
+        R.set(R.lensIndex(idx), 0),
+        ...R.map(
+            n => R.over(R.lensIndex(n), R.inc),
+            R.times(n => (n + idx + 1) % banks.length, max),
+        ),
+    ]);
 };
 
-const part1 = (banks: number[]) => {
-    let seen = false;
+const findDupe = (banks: number[]): DupePair => {
     let count = 0;
-    const lookup: Lookup = {};
-    for (; !seen; ++count) {
-        lookup[banks.join(' ')] = true;
-        banks = redistribute([...banks]);
-        seen = lookup[banks.join(' ')];
+    const lookup = new Set();
+    for (let seen = false; !seen; ++count) {
+        lookup.add(banks.join(''));
+        banks = redist(banks);
+        seen = lookup.has(banks.join(''));
     }
 
-    return count;
+    return [count, banks];
 };
 
-const part2 = (banks: number[]) => {
-    let seen = false;
-    let count = 0;
-    const lookup: Lookup = {};
-    for (; !seen; ++count) {
-        lookup[banks.join(' ')] = true;
-        banks = redistribute([...banks]);
-        seen = lookup[banks.join(' ')];
-    }
+const part1 = R.compose(
+    R.head,
+    findDupe,
+);
 
-    return part1(banks);
-};
+const part2 = R.compose<number[], DupePair, number[], DupePair, number>(
+    R.head,
+    findDupe,
+    R.last,
+    findDupe,
+);
 
-async function day6() {
+(async () => {
     const input = await promisify(readFile)('day6/input.txt', 'utf8');
-    const banks = R.map(parseInt, input.split('\t'));
+    const banks = R.map(parseInt, R.split('\t', input));
 
     console.log(part1(banks));
     console.log(part2(banks));
-}
-
-day6();
+})();
