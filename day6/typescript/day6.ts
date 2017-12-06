@@ -8,13 +8,14 @@ type DupePair = [number, number[]];
 const redist = (banks: number[]): number[] => {
     const max = Math.max(...banks);
     const idx = R.findIndex(R.equals(max), banks);
-    return R.reduce(R.flip(R.call), banks, [
-        R.set(R.lensIndex(idx), 0),
-        ...R.map(
+    return R.reduce(
+        R.flip(R.call),
+        R.set(R.lensIndex(idx), 0, banks),
+        R.map(
             n => R.over(R.lensIndex(n), R.inc),
             R.times(n => (n + idx + 1) % banks.length, max),
         ),
-    ]);
+    );
 };
 
 const findDupe = (banks: number[]): DupePair => {
