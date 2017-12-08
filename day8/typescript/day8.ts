@@ -13,6 +13,15 @@ interface Instruction {
     condition: string[];
 }
 
+const ops: { [op: string]: (x: number, y: number) => boolean } = {
+    ['>']: R.gt,
+    ['<']: R.lt,
+    ['>=']: R.gte,
+    ['<=']: R.lte,
+    ['==']: R.equals,
+    ['!=']: R.compose(R.not, R.equals),
+};
+
 const getRegister = (regs: Registers, reg: string) => R.compose<Registers, number, number>(
     R.defaultTo(0),
     R.prop(reg),
@@ -33,7 +42,7 @@ const solve = (instructions: Instruction[]): [number, Registers] => {
     const regs: Registers = {};
     for (const { register, amount, condition } of instructions) {
         const [cond, op, val] = condition;
-        if (eval(`${getRegister(regs, cond)} ${op} ${val}`)) {
+        if (ops[op](getRegister(regs, cond), parseInt(val, 10))) {
             regs[register] = getRegister(regs, register) + amount;
             max = R.max(max, regs[register]);
         }
