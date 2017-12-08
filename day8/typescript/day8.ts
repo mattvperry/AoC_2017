@@ -44,8 +44,11 @@ const solve = (instructions: Instruction[]): [number, Registers] => {
 
 (async () => {
     const input = await promisify(readFile)('day8/input.txt', 'utf8');
-    const instructions = R.map(parse, R.split('\r\n', input));
-    const [max, regs] = solve(instructions);
+    const [max, regs] = R.compose(
+        solve,
+        R.map(parse),
+        R.split('\r\n'),
+    )(input);
 
     console.log(Math.max(...R.values(regs)));
     console.log(max);
