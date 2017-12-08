@@ -10,7 +10,7 @@ interface Registers {
 interface Instruction {
     register: string;
     amount: number;
-    condition: string[];
+    condition: (g: (r: string) => number) => boolean;
 }
 
 const ops: { [op: string]: (x: number, y: number) => boolean } = {
@@ -22,18 +22,13 @@ const ops: { [op: string]: (x: number, y: number) => boolean } = {
     ['!=']: R.compose(R.not, R.equals),
 };
 
-const getRegister = (regs: Registers, reg: string) => R.compose<Registers, number, number>(
-    R.defaultTo(0),
-    R.prop(reg),
-)(regs);
-
-const parse = (ins: string) => {
-    const [register, op, num, _, ...condition] = R.split(' ', ins);
+const parse = (ins: string): Instruction => {
+    const [register, move, num, _, cond, op, val] = R.split(' ', ins);
     const amount = parseInt(num, 10);
     return {
         register,
-        amount: op === 'inc' ? amount : -1 * amount,
-        condition,
+        amount: move === 'inc' ? amount : -1 * amount,
+        condition: getter => ops[op](getter(cond), parseInt(val, 10)),
     };
 };
 
@@ -41,11 +36,12 @@ const solve = (instructions: Instruction[]): [number, Registers] => {
     let max = 0;
     const regs: Registers = {};
     for (const { register, amount, condition } of instructions) {
-        const [cond, op, val] = condition;
-        if (ops[op](getRegister(regs, cond), parseInt(val, 10))) {
-            regs[register] = getRegister(regs, register) + amount;
-            max = R.max(max, regs[register]);
+        if (!condition(reg => regs[reg] || 0)) {
+            continue;
         }
+
+        regs[register] = (regs[register] || 0) + amount;
+        max = R.max(max, regs[register]);
     }
 
     return [max, regs];
