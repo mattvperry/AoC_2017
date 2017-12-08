@@ -59,7 +59,8 @@
     "variable-name": [ true, "ban-keywords", "check-format", "allow-pascal-case" ],
     "jsx-no-multiline-js": false,
     "strict-boolean-expressions": false,
-    "no-implicit-dependencies": false
+    "no-implicit-dependencies": false,
+    "no-eval": false
   },
   "rulesDirectory": []
 }
