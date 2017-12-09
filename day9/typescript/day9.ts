@@ -9,8 +9,7 @@ const solve = (chars: string[]) => {
     let sum = 0;
     let count = 0;
     while (chars.length > 0) {
-        const c = chars.pop();
-        switch(c) {
+        switch(chars.pop()) {
             case '!':
                 chars.pop();
                 break;
