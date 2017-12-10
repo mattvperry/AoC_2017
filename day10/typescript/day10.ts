@@ -27,7 +27,7 @@ const part1 = (input: string) => {
        R.split(',', input)
     ));
 
-    const [pos, skip, [x, y, ...xs]] = hash(0, 0, R.times(R.identity, 256));
+    const [pos, skip, [x, y, ...xs]] = hash(0, 0, R.range(0, 256));
     return x * y;
 }
 
@@ -37,17 +37,18 @@ const part2 = (input: string) => {
         [17, 31, 73, 47, 23],
     ));
 
-    return R.compose<number[], Data, number[], number[][], number[], string[], string>(
+    const [pos, skip, list] = R.reduce<number, Data>(
+        ([p, s, l], _) => hash(p, s, l),
+        [0, 0, R.range(0, 256)],
+        R.range(0, 64),
+    );
+
+    return R.compose<number[], number[][], number[], string[], string>(
         R.join(''),
         R.map(n => n.toString(16)),
         R.map(R.reduce((acc, curr) => acc ^ curr, 0)),
         R.splitEvery(16),
-        R.last,
-        R.reduce<number, Data>(
-            ([p, s, l], _) => hash(p, s, l),
-            [0, 0, R.times(R.identity, 256)],
-        ),
-    )(R.times(R.identity, 64));
+    )(list);
 }
 
 (async () => {
