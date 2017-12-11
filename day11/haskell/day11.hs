@@ -17,7 +17,7 @@ parse = words . map f
 
 solve :: [String] -> (Int, Int)
 solve = (last &&& maximum) . map f . scanl move (0, 0, 0)
-    where f (x, y, z) = maximum [abs x, abs y, abs z]
+    where f (x, y, z) = maximum . map abs $ [x, y, z]
         
 main :: IO ()
 main = do
