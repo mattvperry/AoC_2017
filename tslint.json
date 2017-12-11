@@ -23,6 +23,7 @@
     ],
     "newline-before-return": false,
     "no-any": false,
+    "no-bitwise": false,
     "no-console": false,
     "no-increment-decrement": false,
     "no-inferrable-types": [ true ],
