@@ -19,17 +19,17 @@ const sparse = (lengths: number[]) => (pos: number, skip: number, list: number[]
     }
 
     return [pos, skip, list];
-}
+};
 
 const part1 = (input: string) => {
     const hash = sparse(R.map(
-       parseInt, 
-       R.split(',', input)
+       parseInt,
+       R.split(',', input),
     ));
 
     const [pos, skip, [x, y, ...xs]] = hash(0, 0, R.range(0, 256));
     return x * y;
-}
+};
 
 const part2 = (input: string) => {
     const hash = sparse(R.concat(
@@ -49,7 +49,7 @@ const part2 = (input: string) => {
         R.map(R.reduce((acc, curr) => acc ^ curr, 0)),
         R.splitEvery(16),
     )(list);
-}
+};
 
 (async () => {
     const input = await promisify(readFile)('day10/input.txt', 'utf8');
