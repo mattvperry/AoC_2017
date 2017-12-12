@@ -10,7 +10,6 @@ const makeGraph = (conns: string[][]) => {
     for (const [from, _, ...tos] of conns) {
         for (const to of tos) {
             graph[from] = (graph[from] || new Set()).add(to);
-            graph[to] = (graph[to] || new Set()).add(from);
         }
     }
 
