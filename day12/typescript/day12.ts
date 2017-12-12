@@ -3,14 +3,12 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
-type Graph = { [node: string]: Set<string> };
+type Graph = { [node: string]: string[] };
 
 const makeGraph = (conns: string[][]) => {
     const graph: Graph = {};
     for (const [from, _, ...tos] of conns) {
-        for (const to of tos) {
-            graph[from] = (graph[from] || new Set()).add(to);
-        }
+        graph[from] = (graph[from] || []).concat(tos);
     }
 
     return graph;
