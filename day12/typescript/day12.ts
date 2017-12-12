@@ -1,0 +1,58 @@
+import { readFile } from 'fs';
+import { promisify } from 'util';
+
+import * as R from 'ramda';
+
+type Graph = { [node: string]: Set<string> };
+
+const makeGraph = (conns: string[][]) => {
+    const graph: Graph = {};
+    for (const [from, _, ...tos] of conns) {
+        for (const to of tos) {
+            graph[from] = (graph[from] || new Set()).add(to);
+            graph[to] = (graph[to] || new Set()).add(from);
+        }
+    }
+
+    return graph;
+};
+
+const findGroup = (graph: Graph, node: string) => {
+    const visited = new Set();
+    const toVisit = [node];
+
+    while (toVisit.length > 0) {
+        const visit = toVisit.pop()!;
+        if (visited.has(visit)) {
+            continue;
+        }
+
+        visited.add(visit);
+        toVisit.push(...graph[visit]);
+    }
+
+    return Array.from(visited);
+};
+
+const part1 = (graph: Graph) => findGroup(graph, '0').length;
+
+const part2 = (graph: Graph) => {
+    let count = 0;
+    let nodes = R.keys(graph);
+    while (nodes.length > 0) {
+        const node = nodes.pop()!;
+        nodes = R.difference(nodes, findGroup(graph, node));
+        count++;
+    }
+
+    return count;
+};
+
+(async () => {
+    const input = await promisify(readFile)('day12/input.txt', 'utf8');
+    const conns = R.map(R.split(/,? /), R.split('\r\n', input));
+    const graph = makeGraph(conns);
+
+    console.log(part1(graph));
+    console.log(part2(graph));
+})();
