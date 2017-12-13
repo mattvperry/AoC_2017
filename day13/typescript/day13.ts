@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import * as R from 'ramda';
 
 interface Layer {
+    depth: number;
     range: number;
     scanner: number;
 }
@@ -14,7 +15,7 @@ const parse = R.compose<string[], Firewall[], Firewall>(
     R.mergeAll,
     R.map(
         R.compose<string, string[], number[], Firewall>(
-            ([d, r]) => ({ [d]: { range: r, scanner: 0 } }),
+            ([d, r]) => ({ [d]: { depth: d, range: r, scanner: 0 } }),
             R.map(parseInt),
             R.split(': '),
         ),
@@ -22,33 +23,30 @@ const parse = R.compose<string[], Firewall[], Firewall>(
 );
 
 const step = R.mapObjIndexed(
-    ({scanner, range}, key, obj) => ({
+    ({ scanner, range, depth }, key, obj) => ({
+        depth,
         range,
-        scanner: (scanner + 1) % (range * 2 - 2)
+        scanner: (scanner + 1) % (range * 2 - 2),
     }),
 );
 
-function* simulate(firewall: Firewall): IterableIterator<[number, number]> {
-    const max = Math.max(...R.map(parseInt, R.keys(firewall)));
-    for (const p of R.range(0, max + 1)) {
-        const layer = firewall[p];
-        if (layer !== undefined && layer.scanner === 0) {
-            yield [p, layer.range];
-        }
+const sim = R.mapObjIndexed(
+    ({ scanner, range, depth }, key, obj) => ({
+        depth,
+        range,
+        scanner: (scanner + parseInt(key, 10)) % (range * 2 - 2),
+    }),
+);
 
-        firewall = step(firewall);
-    }
-}
-
-const part1 = (firewall: Firewall) => R.reduce(
-    (acc, [depth, range]) => acc + depth * range,
+const part1 = (firewall: Firewall) => R.reduce<Layer, number>(
+    (acc, { depth, range }) => acc + depth * range,
     0,
-    Array.from(simulate(firewall)),
+    R.filter(l => l.scanner === 0, R.values(sim(firewall))),
 );
 
 const part2 = (firewall: Firewall) => {
     for (let i = 0;; ++i) {
-        if (Array.from(simulate(firewall)).length === 0) {
+        if (R.all(({ scanner }) => scanner !== 0, R.values(sim(firewall)))) {
             return i;
         }
 
