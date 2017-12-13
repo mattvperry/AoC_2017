@@ -19,16 +19,15 @@ const parse = R.map(
     ),
 );
 
-const stepper = (fn: (s: number, d: number) => number) => R.map(
+const stepper = (fn: (newScanner: number) => number) => R.map(
     ({ scanner, depth, range }) => ({
         depth,
         range,
-        scanner: fn(scanner, depth) % (range * 2 - 2),
+        scanner: fn(scanner + depth) % (range * 2 - 2),
     }),
 );
 
-const step = stepper((s, k) => s + 1);
-const sim = stepper(R.add);
+const sim = stepper(R.identity);
 
 const part1 = (firewall: Firewall) => R.reduce<Layer, number>(
     (acc, { depth, range }) => acc + depth * range,
@@ -38,7 +37,7 @@ const part1 = (firewall: Firewall) => R.reduce<Layer, number>(
 
 const part2 = (firewall: Firewall) => {
     for (let i = 0;; ++i) {
-        const sim2 = stepper((s, d) => s + d + i);
+        const sim2 = stepper(R.add(i));
         if (R.any(R.propEq('scanner', 0), sim2(firewall))) {
             continue;
         }
