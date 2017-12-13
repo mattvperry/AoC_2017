@@ -9,24 +9,21 @@ interface Layer {
     scanner: number;
 }
 
-type Firewall = { [depth: number]: Layer };
+type Firewall = Layer[];
 
-const parse = R.compose<string[], Firewall[], Firewall>(
-    R.mergeAll,
-    R.map(
-        R.compose<string, string[], number[], Firewall>(
-            ([d, r]) => ({ [d]: { depth: d, range: r, scanner: 0 } }),
-            R.map(parseInt),
-            R.split(': '),
-        ),
+const parse = R.map(
+    R.compose<string, string[], number[], Layer>(
+        ([d, r]) => ({ depth: d, range: r, scanner: 0 }),
+        R.map(parseInt),
+        R.split(': '),
     ),
 );
 
-const stepper = (fn: (s: number, k: number) => number) => R.mapObjIndexed(
-    ({ scanner, range, depth }, key, obj) => ({
+const stepper = (fn: (s: number, d: number) => number) => R.map(
+    ({ scanner, depth, range }) => ({
         depth,
         range,
-        scanner: fn(scanner, parseInt(key, 10)) % (range * 2 - 2),
+        scanner: fn(scanner, depth) % (range * 2 - 2),
     }),
 );
 
@@ -36,15 +33,17 @@ const sim = stepper(R.add);
 const part1 = (firewall: Firewall) => R.reduce<Layer, number>(
     (acc, { depth, range }) => acc + depth * range,
     0,
-    R.filter(l => l.scanner === 0, R.values(sim(firewall))),
+    R.filter(R.propEq('scanner', 0), sim(firewall)),
 );
 
 const part2 = (firewall: Firewall) => {
     for (let i = 0;; ++i) {
-        const sim2 = stepper((s, k) => s + k + i);
-        if (R.all(({ scanner }) => scanner !== 0, R.values(sim2(firewall)))) {
-            return i;
+        const sim2 = stepper((s, d) => s + d + i);
+        if (R.any(R.propEq('scanner', 0), sim2(firewall))) {
+            continue;
         }
+
+        return i;
     }
 };
 
