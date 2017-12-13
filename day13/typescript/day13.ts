@@ -22,21 +22,16 @@ const parse = R.compose<string[], Firewall[], Firewall>(
     ),
 );
 
-const step = R.mapObjIndexed(
+const stepper = (fn: (s: number, k: number) => number) => R.mapObjIndexed(
     ({ scanner, range, depth }, key, obj) => ({
         depth,
         range,
-        scanner: (scanner + 1) % (range * 2 - 2),
+        scanner: fn(scanner, parseInt(key, 10)) % (range * 2 - 2),
     }),
 );
 
-const sim = R.mapObjIndexed(
-    ({ scanner, range, depth }, key, obj) => ({
-        depth,
-        range,
-        scanner: (scanner + parseInt(key, 10)) % (range * 2 - 2),
-    }),
-);
+const step = stepper((s, k) => s + 1);
+const sim = stepper(R.add);
 
 const part1 = (firewall: Firewall) => R.reduce<Layer, number>(
     (acc, { depth, range }) => acc + depth * range,
@@ -46,11 +41,10 @@ const part1 = (firewall: Firewall) => R.reduce<Layer, number>(
 
 const part2 = (firewall: Firewall) => {
     for (let i = 0;; ++i) {
-        if (R.all(({ scanner }) => scanner !== 0, R.values(sim(firewall)))) {
+        const sim2 = stepper((s, k) => s + k + i);
+        if (R.all(({ scanner }) => scanner !== 0, R.values(sim2(firewall)))) {
             return i;
         }
-
-        firewall = step(firewall);
     }
 };
 
