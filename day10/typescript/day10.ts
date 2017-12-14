@@ -31,7 +31,7 @@ const part1 = (input: string) => {
     return x * y;
 };
 
-const part2 = (input: string) => {
+export const part2 = (input: string) => {
     const hash = sparse(R.concat(
         R.map(c => c.charCodeAt(0), Array.from(input)),
         [17, 31, 73, 47, 23],
@@ -45,7 +45,7 @@ const part2 = (input: string) => {
 
     return R.compose<number[], number[][], number[], string[], string>(
         R.join(''),
-        R.map(n => n.toString(16)),
+        R.map(n => n.toString(16).padStart(2, '0')),
         R.map(R.reduce((acc, curr) => acc ^ curr, 0)),
         R.splitEvery(16),
     )(list);
@@ -54,6 +54,8 @@ const part2 = (input: string) => {
 (async () => {
     const input = await promisify(readFile)('day10/input.txt', 'utf8');
 
-    console.log(part1(input));
-    console.log(part2(input));
+    if (!module.parent) {
+        console.log(part1(input));
+        console.log(part2(input));
+    }
 })();

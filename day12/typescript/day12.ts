@@ -3,7 +3,7 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
-type Graph = { [node: string]: string[] };
+export type Graph = { [node: string]: string[] };
 
 const makeGraph = (conns: string[][]) => {
     const graph: Graph = {};
@@ -33,7 +33,7 @@ const findGroup = (graph: Graph, node: string) => {
 
 const part1 = (graph: Graph) => findGroup(graph, '0').length;
 
-const part2 = (graph: Graph) => {
+export const part2 = (graph: Graph) => {
     let count = 0;
     let nodes = R.keys(graph);
     while (nodes.length > 0) {
@@ -50,6 +50,8 @@ const part2 = (graph: Graph) => {
     const conns = R.map(R.split(/,? /), R.split('\r\n', input));
     const graph = makeGraph(conns);
 
-    console.log(part1(graph));
-    console.log(part2(graph));
+    if (!module.parent) {
+        console.log(part1(graph));
+        console.log(part2(graph));
+    }
 })();
