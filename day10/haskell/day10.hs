@@ -1,3 +1,8 @@
+module Day10.Haskell.Day10 
+( part2
+, lpad
+) where
+
 import Numeric (showHex)
 import Data.Bits (xor)
 import Data.Char (ord)
@@ -30,10 +35,13 @@ loop :: [Int] -> [(Int, Int, [Int])]
 loop = scanl f (0, 0, [0..255]) . repeat
     where f (p, s, l) = sparse p s l
 
+lpad :: Int -> Char -> String -> String
+lpad n c s = replicate (n - length s) c ++ s
+
 compress :: [Int] -> String
 compress [] = []
 compress xs = uncurry (++) . (hex *** compress) . splitAt 16 $ xs
-    where hex = flip showHex [] . foldl1 xor
+    where hex = lpad 2 '0' . flip showHex [] . foldl1 xor
 
 part2 :: String -> String
 part2 i = compress h

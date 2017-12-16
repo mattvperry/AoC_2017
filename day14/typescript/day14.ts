@@ -7,7 +7,7 @@ import { part2 as knot } from '../../day10/typescript/day10';
 import { part2 as connected, Graph } from '../../day12/typescript/day12';
 
 type Coord = R.KeyValuePair<number, number>;
-type Grid = number[][];
+type Grid = number[];
 
 const binary = (hex: string) => {
     const i = parseInt(hex, 16);
@@ -17,45 +17,45 @@ const binary = (hex: string) => {
 
 const makeGrid = (input: string) => {
     const hashes = R.map(knot, R.times(n => `${input}-${n}`, 128));
-    return R.map(R.compose(R.chain(binary), Array.from), hashes);
+    return R.chain(R.compose(R.chain(binary), Array.from), hashes);
 };
 
-const part1 = R.compose<Grid, number[], number>(R.sum, R.chain(r => r));
+const part1 = R.sum;
 
-const clamp = R.clamp(0, 127);
-const neighbors = (x: number, y: number): Coord[] => [
-    [clamp(x + 1), clamp(y)],
-    [clamp(x), clamp(y + 1)],
-    [clamp(x - 1), clamp(y)],
-    [clamp(x), clamp(y - 1)],
-];
-
-function* occupied(grid: Grid, coords: Coord[]): IterableIterator<Coord> {
-    for (const [x, y] of coords) {
-        if (grid[x][y] === 1) {
-            yield [x, y];
-        }
-    }
-}
-
-const part2 = (grid: Grid) => {
-    const graph: Graph = {};
-    const coords = R.xprod(R.range(0, 128), R.range(0, 128));
-    for (const [i, j] of Array.from(occupied(grid, coords))) {
-        const set = new Set();
-        for (const [x, y] of Array.from(occupied(grid, neighbors(i, j)))) {
-            if (x === i && y === j) {
-                continue;
-            }
-
-            set.add(JSON.stringify([x, y]));
-        }
-
-        graph[JSON.stringify([i, j])] = Array.from(set);
-    }
-
-    return connected(graph);
+const neighbors = (coord: string) => {
+    const [x, y] = JSON.parse(coord);
+    return R.map(JSON.stringify, [
+        [x + 1, y],
+        [x, y + 1],
+        [x - 1, y],
+        [x, y - 1],
+    ]);
 };
+
+const occupied = R.compose<Grid, number[][], number[][], string[]>(
+    R.map<number[], string>(([_, x, y]) => JSON.stringify([x, y])),
+    R.filter<number[]>(([v, x, y]) => v === 1),
+    R.addIndex<number, number[]>(R.map)(
+        (val, idx) => [val, Math.floor(idx / 128), idx % 128],
+    ),
+);
+
+const makeGraph = (cs: Set<string>) => R.reduce<string, Graph>(
+    (acc, curr) => R.set(
+        R.lensProp(curr),
+        R.filter(c => cs.has(c), neighbors(curr)),
+        acc,
+    ),
+    {},
+    Array.from(cs),
+);
+
+const part2 = R.compose(
+    connected,
+    makeGraph,
+    o => new Set(o),
+    occupied,
+);
 
 (async () => {
     const input = await promisify(readFile)('day14/input.txt', 'utf8');
