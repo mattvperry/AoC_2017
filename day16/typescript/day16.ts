@@ -3,96 +3,48 @@ import { promisify } from 'util';
 
 import * as R from 'ramda';
 
-interface Spin {
-    kind: 'spin';
-    data: number;
-}
-
-interface Exchange {
-    kind: 'exchange';
-    data: number[];
-}
-
-interface Partner {
-    kind: 'partner';
-    data: string[];
-}
-
-type Move = Spin | Exchange | Partner;
 type Programs = string[];
+type Moves = { [type: string]: (ps: Programs, data: string[]) => Programs };
 
 const programs = Array.from('abcdefghijklmnop');
 
-const parse = R.map<string, Move>(
-    (m: string) => {
-        switch (R.head(m)) {
-            case 's':
-                return { kind: 'spin', data: parseInt(R.tail(m), 10) };
-            case 'x':
-                return { kind: 'exchange', data: R.map(parseInt, R.split('/', R.tail(m))) };
-            default:
-                return { kind: 'partner', data: R.split('/', R.tail(m)) };
-        }
-    },
-);
+const moves: Moves = {
+    s: (ps, [num]) => spin(ps, +num),
+    x: (ps, data) => exchange(ps, R.map(parseInt, data)),
+    p: (ps, data) => exchange(ps, R.map(p => ps.indexOf(p), data)),
+};
 
-const spin = (ps: Programs, s: Spin) => R.compose<Programs, Programs[], Programs[], Programs>(
-    x => R.flatten<string>(x),
-    R.reverse,
-    R.splitAt(ps.length - s.data),
-)(ps);
+const spin = (ps: Programs, num: number) => [...ps.slice(-num), ...ps.slice(0, -num)];
 
-const exchange = (ps: Programs, e: Exchange): Programs => {
-    const [a, b] = R.map(R.lensIndex, e.data);
+const exchange = (ps: Programs, idx: number[]): Programs => {
+    const [a, b] = R.map(R.lensIndex, idx);
     return R.compose<Programs, Programs, Programs>(
         R.set<string>(b, R.view(a, ps)),
         R.set<string>(a, R.view(b, ps)),
     )(ps);
 };
 
-const partner = (ps: Programs, p: Partner): Programs => {
-    return exchange(ps, {
-        kind: 'exchange',
-        data: R.map(c => R.findIndex(R.equals(c), ps), p.data),
-    });
-};
-
-const makeMoves = (ps: Programs) => R.reduce<Move, Programs>(
-    (acc, curr) => {
-        switch (curr.kind) {
-            case 'spin':
-                return spin(acc, curr);
-            case 'exchange':
-                return exchange(acc, curr);
-            default:
-                return partner(acc, curr);
-        }
-    },
-    ps,
-);
+const makeMoves = R.curry(R.reduce<string, Programs>(
+    (acc, curr) => moves[curr.charAt(0)](acc, curr.slice(1).split('/')),
+));
 
 const part1 = R.compose(R.join(''), makeMoves(programs));
 
-const part2 = (moves: Move[]) => {
-    let ps = [...programs];
-    let count = 0;
+const part2 = (ms: string[]) => {
+    let ps = programs;
+    const seen = [];
     do {
-        ps = makeMoves(ps)(moves);
-        count++;
-    } while (ps.join('') !== programs.join(''));
+        seen.push(ps);
+        ps = makeMoves(ps, ms);
+    } while (!R.equals(ps, programs));
 
-    const rem = 1000000000 % count;
-    for (const _ of R.range(0, rem)) {
-        ps = makeMoves(ps)(moves);
-    }
-
-    return ps.join('');
+    return R.join('', seen[1000000000 % seen.length]);
 };
 
 (async () => {
     const input = await promisify(readFile)('day16/input.txt', 'utf8');
-    const moves = parse(R.split(',', input));
+    const ms = R.split(',', input);
 
-    console.log(part1(moves));
-    console.log(part2(moves));
+    console.log(part1(ms));
+    console.log(part2(ms));
 })();
