@@ -11,8 +11,7 @@ part1 n = (!! 1) . dropWhile (/= n) . foldl ins [] . positions $ n
 
 part2 :: Int -> Int
 part2 = foldl' go 0 . positions
-    where go _ (i, 1) = i
-          go v _      = v
+    where go v (i, c) = if c == 1 then i else v
 
 main :: IO ()
 main = do
