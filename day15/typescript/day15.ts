@@ -20,7 +20,7 @@ function* values({ value, factor }: Generator, criteria: number): IterableIterat
 
 const solve = (as: IterableIterator<number>, bs: IterableIterator<number>, num: number) => {
     let count = 0;
-    for (const i of R.range(0, num)) {
+    for (let i = 0; i < num; ++i) {
         if ((as.next().value & 0xFFFF) === (bs.next().value & 0xFFFF)) {
             count++;
         }
