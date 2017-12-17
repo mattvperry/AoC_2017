@@ -8,27 +8,20 @@ interface Generator {
     factor: number;
 }
 
-const next = ({ value, factor }: Generator) => {
-    return { value: (value * factor) % 2147483647, factor };
-};
-
-function* values(gen: Generator, criteria: number): IterableIterator<Generator> {
+function* values({ value, factor }: Generator, criteria: number): IterableIterator<number> {
     for (;;) {
-        if (gen.value % criteria === 0) {
-            yield gen;
+        if (value % criteria === 0) {
+            yield value;
         }
 
-        gen = next(gen);
+        value = (value * factor) % 2147483647;
     }
 }
 
-const solve = (as: IterableIterator<Generator>, bs: IterableIterator<Generator>, num: number) => {
+const solve = (as: IterableIterator<number>, bs: IterableIterator<number>, num: number) => {
     let count = 0;
     for (const i of R.range(0, num)) {
-        const a = as.next().value;
-        const b = bs.next().value;
-
-        if ((a.value & 0xFFFF) === (b.value & 0xFFFF)) {
+        if ((as.next().value & 0xFFFF) === (bs.next().value & 0xFFFF)) {
             count++;
         }
     }
