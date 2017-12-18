@@ -47,19 +47,23 @@ class Program implements Pipe {
     }
 
     public add([x, y]: Params) {
-        this.set([x, this.lookup(x) + this.lookup(y)]);
+        this.regs[x] += this.lookup(y);
+        this.pc++;
     }
 
     public mul([x, y]: Params) {
-        this.set([x, this.lookup(x) * this.lookup(y)]);
+        this.regs[x] *= this.lookup(y);
+        this.pc++;
     }
 
     public mod([x, y]: Params) {
-        this.set([x, this.lookup(x) % this.lookup(y)]);
+        this.regs[x] %= this.lookup(y);
+        this.pc++;
     }
 
     public jgz([x, y]: Params) {
-        this.pc += (this.lookup(x) > 0 ? this.lookup(y) : 1);
+        this.pc += (this.lookup(x) > 0 ? this.lookup(y) - 1 : 0);
+        this.pc++;
     }
 
     public snd([x]: Params) {
@@ -75,7 +79,8 @@ class Program implements Pipe {
             return;
         }
 
-        this.set([x, sound]);
+        this.regs[x] = sound;
+        this.pc++;
     }
 
     public push(value: number) {
