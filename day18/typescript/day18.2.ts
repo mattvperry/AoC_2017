@@ -11,6 +11,7 @@ enum Status {
 
 type Registers = { [name: string]: number };
 type Params = (number | string)[];
+type Ops = { [name: string]: (this: Program, op: Params) => number | void };
 
 interface Pipe {
     push: (value: number) => void;
@@ -25,6 +26,23 @@ class Program implements Pipe {
     private sounds: number[] = [];
     private pipe: Pipe;
     private code: string[];
+    private ops: Ops = {
+        set: ([x, y]) => { this.regs[x] = this.lookup(y); },
+        add: ([x, y]) => { this.regs[x] += this.lookup(y); },
+        mul: ([x, y]) => { this.regs[x] *= this.lookup(y); },
+        mod: ([x, y]) => { this.regs[x] %= this.lookup(y); },
+        jgz: ([x, y]) => this.lookup(x) > 0 ? this.lookup(y) : 1,
+        snd: ([x]) => { this.sends++; this.pipe.push(this.lookup(x)); },
+        rcv: ([x]) => {
+            const sound = this.sounds.pop();
+            if (sound === undefined) {
+                this.status = Status.waiting;
+                return 0;
+            }
+
+            this.regs[x] = sound;
+        },
+    };
 
     constructor(id: number, lines: string[]) {
         this.regs.p = id;
@@ -32,49 +50,12 @@ class Program implements Pipe {
     }
 
     public step() {
-        const [op, ...ps] = R.split(' ', this.code[this.pc++]);
-        // @ts-ignore
-        this[op](ps);
+        const [op, ...ps] = R.split(' ', this.code[this.pc]);
+        this.pc += R.defaultTo(1, this.ops[op].call(this, ps));
 
         if (this.pc < 0 || this.pc >= this.code.length) {
             this.status = Status.terminated;
         }
-    }
-
-    public set([x, y]: Params) {
-        this.regs[x] = this.lookup(y);
-    }
-
-    public add([x, y]: Params) {
-        this.regs[x] += this.lookup(y);
-    }
-
-    public mul([x, y]: Params) {
-        this.regs[x] *= this.lookup(y);
-    }
-
-    public mod([x, y]: Params) {
-        this.regs[x] %= this.lookup(y);
-    }
-
-    public jgz([x, y]: Params) {
-        this.pc += (this.lookup(x) > 0 ? this.lookup(y) - 1 : 0);
-    }
-
-    public snd([x]: Params) {
-        this.sends++;
-        this.pipe.push(this.lookup(x));
-    }
-
-    public rcv([x]: Params) {
-        const sound = this.sounds.pop();
-        if (sound === undefined) {
-            this.status = Status.waiting;
-            this.pc--;
-            return;
-        }
-
-        this.regs[x] = sound;
     }
 
     public push(value: number) {
