@@ -32,7 +32,7 @@ class Program implements Pipe {
     }
 
     public step() {
-        const [op, ...ps] = R.split(' ', this.code[this.pc]);
+        const [op, ...ps] = R.split(' ', this.code[this.pc++]);
         // @ts-ignore
         this[op](ps);
 
@@ -43,44 +43,38 @@ class Program implements Pipe {
 
     public set([x, y]: Params) {
         this.regs[x] = this.lookup(y);
-        this.pc++;
     }
 
     public add([x, y]: Params) {
         this.regs[x] += this.lookup(y);
-        this.pc++;
     }
 
     public mul([x, y]: Params) {
         this.regs[x] *= this.lookup(y);
-        this.pc++;
     }
 
     public mod([x, y]: Params) {
         this.regs[x] %= this.lookup(y);
-        this.pc++;
     }
 
     public jgz([x, y]: Params) {
         this.pc += (this.lookup(x) > 0 ? this.lookup(y) - 1 : 0);
-        this.pc++;
     }
 
     public snd([x]: Params) {
         this.sends++;
         this.pipe.push(this.lookup(x));
-        this.pc++;
     }
 
     public rcv([x]: Params) {
         const sound = this.sounds.pop();
         if (sound === undefined) {
             this.status = Status.waiting;
+            this.pc--;
             return;
         }
 
         this.regs[x] = sound;
-        this.pc++;
     }
 
     public push(value: number) {
