@@ -57,7 +57,7 @@
     "react-tsx-curly-spacing": false,
     "no-single-line-block-comment": false,
     "triple-equals": [ true, "allow-null-check" ],
-    "typedef": [ true, "parameter", "property-declaration", "member-variable-declaration" ],
+    "typedef": [ true, "parameter", "property-declaration" ],
     "variable-name": [ true, "ban-keywords", "check-format", "allow-pascal-case" ],
     "jsx-no-multiline-js": false,
     "strict-boolean-expressions": false,
