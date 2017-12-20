@@ -47,7 +47,7 @@ const part1 = (particles: Particle[]) => {
 };
 
 const part2 = (particles: Particle[]) => {
-    for (let i = 0; i < 1000; ++i) {
+    for (let i = 0; i < 50; ++i) {
         particles = R.pipe<Particle[], Groups, Particle[][], Particle[][], Particle[], Particle[]>(
             R.groupBy<Particle>(p => p.position.join(' ')),
             R.values,
