@@ -28,7 +28,7 @@ const toString = R.pipe(R.map(R.join('')), R.join('/'));
 
 const flipH = R.map<string[], string[]>(R.reverse);
 
-const flipV = R.pipe<Image, Image, Image, Image>(R.transpose, flipH, R.transpose);
+const flipV = R.reverse;
 
 const rotateLeft = R.pipe(flipH, R.transpose);
 
