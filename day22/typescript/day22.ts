@@ -13,73 +13,52 @@ const move = [
     ([x, y]: Coord) => [x - 1, y], // Left
 ];
 
-const part1 = (grid: Grid) => {
-    let [x, y] = [12, 12];
-    let dir = 0;
+const travel = (grid: Grid, moves: number, next: (cell: string) => [number, string]) => {
     let infected = 0;
-    for (let i = 0; i < 10000; ++i) {
+    let dir = 0;
+    let [x, y] = [Math.floor(grid.length / 2), Math.floor(grid.length / 2)];
+    for (let i = 0; i < moves; ++i) {
         if (grid[y] === undefined) {
             grid[y] = [];
         }
         if (grid[y][x] === undefined) {
             grid[y][x] = '.';
         }
-        const cell = grid[y][x];
-        if (cell === '#') {
-            dir = R.mathMod(dir + 1, 4) ;
-            grid[y][x] = '.';
-        } else {
-            dir = R.mathMod(dir - 1, 4);
-            grid[y][x] = '#';
+
+        const [turn, set] = next(grid[y][x]);
+        if (set === '#') {
             infected++;
         }
 
+        grid[y][x] = set;
+        dir = R.mathMod(dir + turn, 4);
         [x, y] = move[dir]([x, y]);
     }
 
     return infected;
 };
 
-const part2 = (grid: Grid) => {
-    let [x, y] = [12, 12];
-    let dir = 0;
-    let infected = 0;
-    for (let i = 0; i < 10000000; ++i) {
-        if (grid[y] === undefined) {
-            grid[y] = [];
-        }
-        if (grid[y][x] === undefined) {
-            grid[y][x] = '.';
-        }
-        const cell = grid[y][x];
-        switch (cell) {
-            case '#':
-                dir = R.mathMod(dir + 1, 4) ;
-                grid[y][x] = 'F';
-                break;
-            case 'W':
-                grid[y][x] = '#';
-                infected++;
-                break;
-            case 'F':
-                dir = R.mathMod(dir + 2, 4) ;
-                grid[y][x] = '.';
-                break;
-            default:
-                dir = R.mathMod(dir - 1, 4);
-                grid[y][x] = 'W';
-                break;
-        }
+const part1 = (grid: Grid) => travel(grid, 10000, cell => (
+    cell === '#' ? [1, '.'] : [-1, '#']
+));
 
-        [x, y] = move[dir]([x, y]);
+const part2 = (grid: Grid) => travel(grid, 10000000, cell => {
+    switch (cell) {
+        case '#':
+            return [1, 'F'];
+        case 'W':
+            return [0, '#'];
+        case 'F':
+            return [2, '.'];
+        default:
+            return [-1, 'W'];
     }
-
-    return infected;
-};
+});
 
 (async () => {
     const input = await promisify(readFile)('day22/input.txt', 'utf8');
     const grid = R.map(Array.from, R.split('\r\n', input));
 
-    console.log(part2(grid));
+    console.log(part1(grid.map(r => [...r])));
+    console.log(part2(grid.map(r => [...r])));
 })();
