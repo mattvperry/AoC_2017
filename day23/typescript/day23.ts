@@ -21,12 +21,10 @@ const lookup = (state: State, x: number | string) => (
     isNaN(+x) ? R.pipe(R.path<number>(['regs', x]), R.defaultTo(0))(state) : +x
 );
 
-let a = 0;
-
 const ops: Ops = {
     set: (s, [x, y]) => ({ ...s, regs: { ...s.regs, [x]: lookup(s, y) }}),
     sub: (s, [x, y]) => ops.set(s, [x, lookup(s, x) - lookup(s, y)]),
-    mul: (s, [x, y]) => { a++; return ops.set(s, [x, lookup(s, x) * lookup(s, y)]); },
+    mul: (s, [x, y]) => ops.set(s, [x, lookup(s, x) * lookup(s, y)]),
     jnz: (s, [x, y]) => ({ ...s, pc: s.pc + (lookup(s, x) !== 0 ? lookup(s, y) - 1 : 0) }),
 };
 
@@ -42,22 +40,23 @@ const perform = (state: State, code: string, size: number) => {
 };
 
 const exec = (state: State) => (lines: string[]) => {
+    let count = 0;
     while (state.status === Status.running) {
+        if (lines[state.pc].startsWith('mul')) {
+            count++;
+        }
+
         state = perform(state, lines[state.pc], lines.length);
     }
+
+    return count;
 };
 
 const part1 = exec({ pc: 0, regs: {}, status: Status.running });
 
-const isPrime = (num: number) => {
-    for (let i = 2; i <= Math.sqrt(num); i++) {
-        if (num % i === 0) {
-            return false;
-        }
-    }
-
-    return num !== 1;
-};
+const isPrime = (num: number) => (
+    R.all(n => num % n !== 0, R.range(2, Math.sqrt(num) + 1)) && num !== 1
+);
 
 const part2 = () => R.pipe<number, number[], number[], number>(
     R.times(n => 108100 + (n * 17)),
@@ -69,7 +68,6 @@ const part2 = () => R.pipe<number, number[], number[], number>(
     const input = await promisify(readFile)('day23/input.txt', 'utf8');
     const lines = R.split('\r\n', input);
 
-    part1(lines);
-    console.log(a);
+    console.log(part1(lines));
     console.log(part2());
 })();
