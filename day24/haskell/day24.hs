@@ -17,7 +17,7 @@ construct n b cs
     | S.null ms = [b]
     | otherwise = concatMap go ms
     where ms          = matches n cs
-          go m@(i, o) = construct (if n == i then o else i) (b ++ [m]) (S.delete m cs)
+          go m@(i, o) = construct (if n == i then o else i) (m:b) (S.delete m cs)
 
 strongest :: [Bridge] -> Int
 strongest = maximum . map (sum . map (uncurry (+)))
