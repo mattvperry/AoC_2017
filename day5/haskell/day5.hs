@@ -1,24 +1,24 @@
-import Control.Lens
-import Data.Array (Array, listArray)
+import qualified Data.Vector.Unboxed as V
+import qualified Data.Vector.Unboxed.Mutable as VM
+import Control.Monad.ST (ST, runST)
 
-type Tape = Array Int Int
+parse :: String -> V.Vector Int
+parse = V.fromList . map read . lines
 
-parse :: String -> Tape
-parse i = listArray (0, length offsets - 1) offsets
-    where offsets = map read . lines $ i
+run :: (Int -> Int) -> Int -> Int -> VM.MVector s Int -> ST s Int
+run f n i v
+    | i < 0 || i >= VM.length v = return n
+    | otherwise = do
+        j <- VM.read v i
+        VM.modify v f i
+        run f (n + 1) (i + j) v
 
-jump :: (Int -> Int) -> Int -> Int -> Tape -> Int
-jump f n i os
-    | Just v <- val = jump f (n + 1) (i + v) (os & ix i +~ f v)
-    | otherwise = n
-    where val = os ^? ix i
+part1 :: V.Vector Int -> Int
+part1 os = runST $ V.thaw os >>= run (+1) 0 0
 
-part1 :: Tape -> Int
-part1 = jump (const 1) 0 0
-
-part2 :: Tape -> Int
-part2 = jump f 0 0
-    where f x = if x >= 3 then -1 else 1
+part2 :: V.Vector Int -> Int
+part2 os = runST $ V.thaw os >>= run f 0 0
+    where f x = if x >= 3 then x - 1 else x + 1
 
 main :: IO ()
 main = do
