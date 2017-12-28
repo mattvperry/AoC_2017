@@ -1,48 +1,30 @@
-import Data.IntMap (IntMap)
-import Data.Map (Map, (!))
-import qualified Data.IntMap as I
-import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
+import Data.Set (Set, notMember, insert, delete, empty, size)
 
-data Value = Z | O deriving (Eq, Show, Ord)
+data State = A | B | C | D | E | F deriving (Eq)
 
-data Turing = Turing
-    { state :: Char
-    , cursor :: Int
-    , tape :: IntMap Value
-    } deriving (Show)
-
-data Move = Move
-    { set :: Value
-    , change :: Int
-    , next :: Char
-    } deriving (Show)
-
-states :: Map (Char, Value) Move
-states = M.fromList 
-    [ (('A', Z), Move { set = O, change = 1, next = 'B' })
-    , (('A', O), Move { set = Z, change = -1, next = 'E' })
-    , (('B', Z), Move { set = O, change = -1, next = 'C' })
-    , (('B', O), Move { set = Z, change = 1, next = 'A' })
-    , (('C', Z), Move { set = O, change = -1, next = 'D' })
-    , (('C', O), Move { set = Z, change = 1, next = 'C' })
-    , (('D', Z), Move { set = O, change = -1, next = 'E' })
-    , (('D', O), Move { set = Z, change = -1, next = 'F' })
-    , (('E', Z), Move { set = O, change = -1, next = 'A' })
-    , (('E', O), Move { set = O, change = -1, next = 'C' })
-    , (('F', Z), Move { set = O, change = -1, next = 'E' })
-    , (('F', O), Move { set = O, change = 1, next = 'A' })]
-
-step :: Turing -> Turing
-step (Turing { state = s, cursor = c, tape = t }) = Turing 
-    { state = next move
-    , tape = I.insert c (set move) t
-    , cursor = c + change move }
-    where move = states ! (s, fromMaybe Z $ I.lookup c t)
+step :: Int -> State -> Int -> Set Int -> Set Int
+step 0 _ _ s        = s
+step n A c s
+    | notMember c s = step (n - 1) B (c + 1) (insert c s)
+    | otherwise     = step (n - 1) E (c - 1) (delete c s)
+step n B c s
+    | notMember c s = step (n - 1) C (c - 1) (insert c s)
+    | otherwise     = step (n - 1) A (c + 1) (delete c s)
+step n C c s
+    | notMember c s = step (n - 1) D (c - 1) (insert c s)
+    | otherwise     = step (n - 1) C (c + 1) (delete c s)
+step n D c s
+    | notMember c s = step (n - 1) E (c - 1) (insert c s)
+    | otherwise     = step (n - 1) F (c - 1) (delete c s)
+step n E c s
+    | notMember c s = step (n - 1) A (c - 1) (insert c s)
+    | otherwise     = step (n - 1) C (c - 1) s
+step n F c s
+    | notMember c s = step (n - 1) E (c - 1) (insert c s)
+    | otherwise     = step (n - 1) A (c + 1) s
 
 part1 :: Int
-part1 = length . filter (== O) . I.elems . tape . (!! 12208951) . iterate step $ start
-    where start = Turing { state = 'A', cursor = 0, tape = I.empty }
+part1 = size $ step 12208951 A 0 empty
 
 main :: IO ()
 main = print part1
