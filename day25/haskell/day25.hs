@@ -1,8 +1,8 @@
-import Data.Set (Set, notMember, insert, delete, empty, size)
+import Data.IntSet
 
 data State = A | B | C | D | E | F deriving (Eq)
 
-step :: Int -> State -> Int -> Set Int -> Set Int
+step :: Int -> State -> Int -> IntSet -> IntSet
 step 0 _ _ s        = s
 step n A c s
     | notMember c s = step (n - 1) B (c + 1) (insert c s)
