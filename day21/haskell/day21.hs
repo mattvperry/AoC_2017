@@ -1,28 +1,32 @@
+{-# LANGUAGE RankNTypes #-}
+
 import Prelude hiding (lookup)
-import Data.Map (Map, lookup, empty, insert)
-import Data.Maybe (mapMaybe)
+import Control.Lens (over, Traversal')
+import Data.Map (Map, (!), fromList)
 import Data.List (transpose)
 import Data.List.Split (chunksOf, splitOn)
 
 type Image = [String]
 type Rules = Map Image Image
 
-parse :: String -> Rules
-parse = foldl go empty . map (splitOn " => ") . lines
-    where go m [l, r] = insert (splitOn "/" l) (splitOn "/" r) m
-
-split :: Int -> [[a]] -> [[[a]]]
-split s = concat . transpose . map (chunksOf s) . transpose . map (chunksOf s)
-
-combine :: Int -> [[[a]]] -> [[a]]
-combine s = transpose . append . map (transpose . append) . chunksOf s
-    where append = foldl1 (zipWith (++))
-
 transforms :: Image -> [Image]
 transforms i = take 4 . iterate (reverse . transpose) =<< [i, reverse i]
 
+parse :: String -> Rules
+parse = fromList . concatMap (f . map (splitOn "/") . splitOn " => ") . lines
+    where f [l, r] = zip (transforms l) (repeat r)
+
+split :: Int -> Image -> [[Image]]
+split s = transpose . map (map transpose . chunksOf s . transpose) . chunksOf s
+
+combine :: [[Image]] -> Image
+combine = transpose . concatMap (transpose . concat)
+
+subGrids :: Int -> Traversal' Image Image
+subGrids n f = fmap combine . (traverse . traverse) f . split n
+
 step :: Rules -> Image -> Image
-step rs i = head . combine (length i `div` size) . map (mapMaybe (`lookup` rs) . transforms) . split size $ i
+step rs i = over (subGrids size) (rs !) i
     where size = 2 + (length i `mod` 2)
 
 solve :: Rules -> Int -> Int

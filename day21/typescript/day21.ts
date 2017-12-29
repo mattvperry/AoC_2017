@@ -15,32 +15,32 @@ const seed = [
     ['#', '#', '#'],
 ];
 
-const parse = (lines: string[]): Rules => R.mergeAll(
-    R.map(
-        R.pipe(R.split(' => '), ([f, t]) => ({ [f]: t })),
-        lines,
-    ),
-);
-
 const toImage = R.pipe(R.split('/'), R.map(Array.from));
 
 const toString = R.pipe(R.map(R.join('')), R.join('/'));
 
-const transform = (rules: Rules) => (image: Image): Image => {
-    const projections = R.scan(
-        (acc, curr) => curr(acc),
-        image,
-        R.unnest<(image: Image) => Image>(R.repeat([R.transpose, R.reverse], 4)),
-    );
-    for (const p of projections) {
-        const flat = toString(p);
-        if (rules[flat] !== undefined) {
-            return toImage(rules[flat]);
-        }
-    }
+const projections = (image: Image) => R.map(toString, R.scan(
+    (acc, curr) => curr(acc),
+    image,
+    R.unnest<(image: Image) => Image>(R.repeat([R.transpose, R.reverse], 4)),
+));
 
-    throw new Error('Missing rule.');
-};
+const parse = (lines: string[]): Rules => R.mergeAll(
+    R.chain(
+        R.pipe(
+            R.split(' => '),
+            ([f, t]) => R.map(
+                p => ({ [p]: t }),
+                projections(toImage(f)),
+            ),
+        ),
+        lines,
+    ),
+);
+
+const transform = (rules: Rules) => (image: Image): Image => (
+    toImage(rules[toString(image)])
+);
 
 const split = (size: number) => R.pipe<Image, Image[], Image[], Image[][], Image[][], Image[]>(
     R.map(R.splitEvery(size)),
