@@ -1,13 +1,6 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE KindSignatures        #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE RelaxedPolyRec        #-}
-{-# LANGUAGE ConstraintKinds       #-}
-{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE FlexibleContexts      #-}
 
 import Data.Char (isAlpha)
 import qualified Data.Map as M
@@ -19,7 +12,6 @@ import Control.Applicative (many, empty)
 import Control.Monad (when, guard, void)
 import Control.Monad.Prompt (Prompt, runPromptM, prompt)
 import Control.Monad.State (State, StateT, get, put, modify, evalState, execStateT)
-import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Maybe (MaybeT, runMaybeT)
 import Control.Monad.Writer (Writer, WriterT, tell, runWriterT, execWriter)
 
@@ -73,7 +65,7 @@ receive = prompt . CRcv
 
 perform :: Op -> Duet ()
 perform (Set x y)   = (reg x .=) =<< val y
-perform (Snd x)     = void (val x >>= send)
+perform (Snd x)     = void $ val x >>= send
 perform (Rcv x)     = use (reg x) >>= receive >>= assign (reg x)
 perform (Bin f x y) = flip f <$> val y >>= modifying (reg x)
 perform (Jgz x y)   = (> 0)  <$> val x >>= flip when ((pc +=) =<< pred <$> val y)
