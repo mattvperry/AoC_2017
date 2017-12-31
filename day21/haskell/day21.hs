@@ -1,6 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
 
-import Prelude hiding (lookup)
 import Control.Lens (over, Traversal')
 import Data.Map (Map, (!), fromList)
 import Data.List (transpose)

@@ -1,16 +1,19 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 
-import Data.Char (isLetter)
+import Data.Char (isAlpha)
 import Data.Map (Map, empty)
-import Data.Maybe (mapMaybe, catMaybes)
-import qualified Data.Sequence as S
-import Control.Arrow ((&&&))
+import Data.Maybe (mapMaybe)
+import Data.Monoid (Sum(..))
+import qualified Data.Vector as V
+import Control.Applicative (many)
 import Control.Lens
-import Control.Monad.State (State, get, put, evalState)
+import Control.Monad (when)
+import Control.Monad.State (StateT, execStateT, get)
+import Control.Monad.Writer (Writer, tell, execWriter)
+import Control.Monad.Trans.Maybe (MaybeT, runMaybeT)
 
 type Param = Either Char Int
-type Registers = Map Char Int
 
 data Op
     = Set Char Param
@@ -19,62 +22,51 @@ data Op
     | Jnz Param Param
       deriving (Eq, Show)
 
-data Status 
-    = Terminated
-    | Running
-      deriving (Eq, Show)
-
 data Program = Program
     { _pc     :: Int
-    , _regs   :: Registers
-    , _status :: Status
-    , _code   :: S.Seq Op
+    , _regs   :: Map Char Int
+    , _code   :: V.Vector Op
     } deriving (Show)
 makeLenses ''Program
 
-parse :: String -> S.Seq Op
-parse = S.fromList . mapMaybe (go . words) . lines
-    where go ["set", x, y] = Just $ Set (head x) (f y)
-          go ["sub", x, y] = Just $ Sub (head x) (f y)
-          go ["mul", x, y] = Just $ Mul (head x) (f y)
-          go ["jnz", x, y] = Just $ Jnz (f x) (f y)
-          go _             = Nothing
-          f x
-            | all isLetter x = Left $ head x
-            | otherwise      = Right $ read x
+type App = MaybeT (StateT Program (Writer (Sum Int)))
+
+parse :: String -> V.Vector Op
+parse = V.fromList . mapMaybe (go . words) . lines
+    where go ["set", x, y]  = Just $ Set (head x) (f y)
+          go ["sub", x, y]  = Just $ Sub (head x) (f y)
+          go ["mul", x, y]  = Just $ Mul (head x) (f y)
+          go ["jnz", x, y]  = Just $ Jnz (f x) (f y)
+          go _              = Nothing
+          f [c] | isAlpha c = Left c
+          f str             = Right $ read str
 
 reg :: Char -> Lens' Program Int
 reg r = regs . at r . non 0
 
-val :: Param -> Program -> Int
-val = either (view . reg) const
+val :: Param -> App Int
+val = either (use . reg) pure
 
-perform :: Program -> Op -> Program
-perform p (Set x y) = p & reg x .~ (val y p)
-perform p (Sub x y) = p & reg x -~ (val y p)
-perform p (Mul x y) = p & reg x *~ (val y p)
-perform p (Jnz x y)
-    | val x p /= 0  = p & pc +~ (val y p - 1)
-    | otherwise     = p
+perform :: Op -> App ()
+perform (Set x y) = (reg x .=) =<< val y
+perform (Sub x y) = (reg x -=) =<< val y
+perform (Mul x y) = (reg x *=) =<< val y
+perform (Jnz x y) = (/= 0) <$> val x >>= flip when ((pc +=) =<< pred <$> val y)
 
-step :: Program -> (Program, Maybe Op)
-step p = (go &&& id) $ p ^? code . ix (p ^. pc)
-    where go (Just o) = (perform p o) & pc +~ 1
-          go Nothing  = p & status .~ Terminated
+step :: App ()
+step = do
+    c <- use pc
+    Just o <- preuse (code . ix c)
+    when (isMul o) (tell . Sum $ 1)
+    perform o >> pc += 1
+    where isMul (Mul _ _) = True
+          isMul _         = False
 
-exec :: State Program [Maybe Op]
-exec = do
-    (p, o) <- step <$> get
-    put p
-    case view status p of
-        Running    -> return . (o :) =<< exec
-        Terminated -> return []
+execApp :: App a -> Program -> Writer (Sum Int) Program
+execApp = execStateT . runMaybeT
 
-part1 :: S.Seq Op -> Int
-part1 c = length . filter f . catMaybes . evalState exec $ p
-    where p = Program { _pc = 0, _regs = empty, _status = Running, _code = c }
-          f (Mul _ _) = True
-          f _         = False
+part1 :: V.Vector Op -> Int
+part1 = getSum . execWriter . execApp (many step) . Program 0 empty
 
 part2 :: Int
 part2 = length . filter (not . isPrime) $ [108100,108117..125100]

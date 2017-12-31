@@ -23,7 +23,7 @@ travel f n d c g i
     | s == I    = next (i + 1)
     | otherwise = next i
     where (t, s) = f (findWithDefault C c g)
-          dir    = ((d + t) `mod` 4)
+          dir    = (d + t) `mod` 4
           next   = travel f (n - 1) dir (move dir c) (insert c s g)
 
 part1 :: Grid -> Int

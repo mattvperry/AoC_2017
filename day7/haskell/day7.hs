@@ -17,7 +17,7 @@ type Tree = Map String Node
 
 parse :: String -> Tree
 parse = fromList . map ((name &&& id) . f . words) . lines
-    where f (n:w:[])   = Node { name = n, weight = g w, children = [] }
+    where f [n, w]     = Node { name = n, weight = g w, children = [] }
           f (n:w:_:ns) = Node { name = n, weight = g w, children = splitOn "," . concat $ ns }
           g = read . init . tail
 
@@ -41,7 +41,7 @@ weigh t n = do
     ws <- mapM (weigh t) cs
     notFound <- isNothing <$> get
     when notFound $ case analyze ws of
-        Just (d, n') -> put . Just $ (weight $ t ! n') + d
+        Just (d, n') -> put . Just $ weight (t ! n') + d
         Nothing      -> return ()
     return (w + sum (map fst ws), n)
 

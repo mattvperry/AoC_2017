@@ -42,7 +42,7 @@ const perform = (state: State, code: string, size: number) => {
 const exec = (state: State) => (lines: string[]) => {
     let count = 0;
     while (state.status === Status.running) {
-        if (lines[state.pc].startsWith('mul')) {
+        if (true /*lines[state.pc].startsWith('mul')*/) {
             count++;
         }
 
